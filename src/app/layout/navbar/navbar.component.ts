@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonModule } from 'primeng/button';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -8,6 +8,8 @@ import { AvatarComponent } from './avatar/avatar.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MenuItem } from 'primeng/api';
 import { ToastService } from '../toast.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { User } from '../../core/model/user.model';
 
 @Component({
   selector: 'app-navbar',
@@ -24,30 +26,72 @@ import { ToastService } from '../toast.service';
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
+  
+  login = () => this.authService.login();
+
+  logout = () => this.authService.logout();
 
   location = "Anywhere";
   guests = "Add guests";
   dates = "Any week";
 
   toastService : ToastService= inject(ToastService);
-
+  authService : AuthService= inject(AuthService);
   currentMenuItems: MenuItem[] | undefined = [];
-  
+  connectedUser: User = {email: this.authService.notConnected};
+
+  constructor(){
+    effect(() => {
+      if (this.authService.fetchUser().status === "OK") {
+        this.connectedUser = this.authService.fetchUser().value!;
+        this.currentMenuItems = this.fetchMenu();
+      }
+    });
+  }
   ngOnInit(): void {
-    this.currentMenuItems = this.fetchMenu();
-    this.toastService.send({severity:"info", summary :"welcome to your Airbnb App"});
+    this.authService.fetch(false); 
   }
   private fetchMenu(){
-    return [
+    if(this.authService.isAuthenticated()){
+      return [
+        {
+          label: "My properties",
+          routerLink: "landlord/properties",
+          visible: this.hasToBeLandlord(),
+        },
+        {
+          label: "My booking",
+          routerLink: "booking",
+        },
+        {
+          label: "My reservation",
+          routerLink: "landlord/reservation",
+          visible: this.hasToBeLandlord(),
+        },
+        {
+          label: "Log out",
+          command: this.logout
+        },
+      ]
+    }else{
+      return [
       {
         label: "Sign up",
         styleClass: "font-bold",
+        command:this.login
       },
       {
         label: "Log in",
+        command:this.login
+
       }
     ]
+    }
+    
   }
+  hasToBeLandlord():boolean {
+    return this.authService.hasAnyAuthority("ROLE_LANDLORD");
 
+  }
 
 }
