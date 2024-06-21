@@ -1,14 +1,19 @@
-import { Component, EventEmitter, Output, effect, inject, input } from '@angular/core';
-import { CardListing } from '../../landlord/model/listing.model';
-import { BookedListing } from '../../tenant/model/booking.model';
-import { Router } from '@angular/router';
-import { CategoryService } from '../../layout/navbar/category/category.service';
-import { CountryService } from '../../landlord/properties-create/step/location-step/country.service';
+import {Component, effect, EventEmitter, inject, input, Output} from '@angular/core';
+import {CardListing} from "../../landlord/model/listing.model";
+import {BookedListing} from "../../tenant/model/booking.model";
+import {Router} from "@angular/router";
+import {CategoryService} from "../../layout/navbar/category/category.service";
+import {CountryService} from "../../landlord/properties-create/step/location-step/country.service";
+import {CurrencyPipe, DatePipe} from "@angular/common";
+import {FaIconComponent} from "@fortawesome/angular-fontawesome";
+
 
 @Component({
   selector: 'app-card-listing',
   standalone: true,
-  imports: [],
+  imports: [DatePipe,
+    CurrencyPipe,
+    FaIconComponent],
   templateUrl: './card-listing.component.html',
   styleUrl: './card-listing.component.scss'
 })

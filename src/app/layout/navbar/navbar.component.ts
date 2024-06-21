@@ -12,6 +12,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { User } from '../../core/model/user.model';
 import { ActivatedRoute } from '@angular/router';
 import { PropertiesCreateComponent } from '../../landlord/properties-create/properties-create.component';
+import { SearchComponent } from '../../tenant/search/search.component';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-navbar',
@@ -29,24 +31,26 @@ import { PropertiesCreateComponent } from '../../landlord/properties-create/prop
 })
 export class NavbarComponent {
   
-  login = () => this.authService.login();
-
-  logout = () => this.authService.logout();
-
   location = "Anywhere";
   guests = "Add guests";
   dates = "Any week";
 
-  toastService : ToastService= inject(ToastService);
-  authService : AuthService= inject(AuthService);
+  toastService = inject(ToastService);
+  authService = inject(AuthService);
   dialogService = inject(DialogService);
   activatedRoute = inject(ActivatedRoute);
-  ref: DynamicDialogRef | undefined
+  ref: DynamicDialogRef | undefined;
+
+  login = () => this.authService.login();
+
+  logout = () => this.authService.logout();
 
   currentMenuItems: MenuItem[] | undefined = [];
+
   connectedUser: User = {email: this.authService.notConnected};
 
-  constructor(){
+
+  constructor() {
     effect(() => {
       if (this.authService.fetchUser().status === "OK") {
         this.connectedUser = this.authService.fetchUser().value!;
@@ -54,11 +58,14 @@ export class NavbarComponent {
       }
     });
   }
+
   ngOnInit(): void {
-    this.authService.fetch(false); 
+    this.authService.fetch(false);
+    this.extractInformationForSearch();
   }
-  private fetchMenu(){
-    if(this.authService.isAuthenticated()){
+
+  private fetchMenu(): MenuItem[] {
+    if (this.authService.isAuthenticated()) {
       return [
         {
           label: "My properties",
@@ -79,25 +86,23 @@ export class NavbarComponent {
           command: this.logout
         },
       ]
-    }else{
+    } else {
       return [
-      {
-        label: "Sign up",
-        styleClass: "font-bold",
-        command:this.login
-      },
-      {
-        label: "Log in",
-        command:this.login
-
-      }
-    ]
+        {
+          label: "Sign up",
+          styleClass: "font-bold",
+          command: this.login
+        },
+        {
+          label: "Log in",
+          command: this.login
+        }
+      ]
     }
-    
   }
-  hasToBeLandlord():boolean {
-    return this.authService.hasAnyAuthority("ROLE_LANDLORD");
 
+  hasToBeLandlord(): boolean {
+    return this.authService.hasAnyAuthority("ROLE_LANDLORD");
   }
 
   openNewListing(): void {
@@ -112,4 +117,33 @@ export class NavbarComponent {
       })
   }
 
-}
+  openNewSearch(): void {
+    this.ref = this.dialogService.open(SearchComponent,
+      {
+        width: "40%",
+        header: "Search",
+        closable: true,
+        focusOnShow: true,
+        modal: true,
+        showHeader: true
+      });
+  }
+
+  private extractInformationForSearch(): void {
+    this.activatedRoute.queryParams.subscribe({
+      next: params => {
+        if (params["location"]) {
+          this.location = params["location"];
+          this.guests = params["guests"] + " Guests";
+          this.dates = dayjs(params["startDate"]).format("MMM-DD")
+            + " to " + dayjs(params["endDate"]).format("MMM-DD");
+        } else if (this.location !== "Anywhere") {
+          this.location = "Anywhere";
+          this.guests = "Add guests";
+          this.dates = "Any week";
+        }
+      }
+    })
+  }
+ }
+
