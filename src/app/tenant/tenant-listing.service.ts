@@ -18,6 +18,10 @@ export class TenantListingService {
   = signal(State.Builder<Page<CardListing>>().forInit())
   getAllByCategorySig = computed(() => this.getAllByCategory$());
 
+  private getOneByPublicId$: WritableSignal<State<Listing>>
+    = signal(State.Builder<Listing>().forInit())
+  getOneByPublicIdSig = computed(() => this.getOneByPublicId$());
+
   constructor() { }
   getAllByCategory(pageRequest: Pagination, category: CategoryName) : void {
     let params = createPaginationOption(pageRequest);
@@ -29,9 +33,22 @@ export class TenantListingService {
         error: error => this.getAllByCategory$.set(State.Builder<Page<CardListing>>().forError(error))
       })
   }
+  
   resetGetAllCategory(): void {
     this.getAllByCategory$.set(State.Builder<Page<CardListing>>().forInit())
   }
 
+  getOneByPublicId(publicId: string): void {
+    const params = new HttpParams().set("publicId", publicId);
+    this.http.get<Listing>(`${environment.API_URL}/tenant-listing/get-one`, {params})
+      .subscribe({
+        next: listing => this.getOneByPublicId$.set(State.Builder<Listing>().forSuccess(listing)),
+        error: err => this.getOneByPublicId$.set(State.Builder<Listing>().forError(err)),
+      });
+  }
+  resetGetOneByPublicId(): void {
+    this.getOneByPublicId$.set(State.Builder<Listing>().forInit())
+  }
+  
   
 }
