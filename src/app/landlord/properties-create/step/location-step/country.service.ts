@@ -1,5 +1,5 @@
 import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, of, shareReplay, tap } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap } from 'rxjs';
 import { Country } from './country.model';
 import { State } from '../../../../core/model/state.model';
 import { HttpClient } from '@angular/common/http';
@@ -33,5 +33,11 @@ export class CountryService {
         }),
         shareReplay(1)
       );
+  }
+  public getCountryByCode(code: string): Observable<Country> {
+    return this.fetchCountry$.pipe(
+      map(countries => countries.filter(country => country.cca3 === code)),
+      map(countries => countries[0])
+    );
   }
 }
